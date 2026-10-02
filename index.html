@@ -23,24 +23,25 @@
     <div id="lista-carteles">Cargando carteles...</div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+  <script>
     const firebaseConfig = {
-      databaseURL: "https://nfccaba-5e8d5-default-rtdb.firebaseio.com/"
+      databaseURL: "https://nfccaba-5e8d5-default-rtdb.firebaseio.com"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
 
     const contenedor = document.getElementById('lista-carteles');
 
-    onValue(ref(db, 'carteles'), (snapshot) => {
+    db.ref('carteles').on('value', (snapshot) => {
       const data = snapshot.val() || {};
       contenedor.innerHTML = '';
       
-      // Crea los carteles del 001 al 050
       for (let i = 1; i <= 50; i++) {
         const id = String(i).padStart(3, '0');
         const urlActual = data[id] || '';
@@ -59,12 +60,12 @@
       }
     });
 
-    window.guardarCartel = function(id) {
+    function guardarCartel(id) {
       const url = document.getElementById(`input-${id}`).value;
-      set(ref(db, 'carteles/' + id), url).then(() => {
+      db.ref('carteles/' + id).set(url).then(() => {
         alert(`¡Cartel #${id} guardado correctamente!`);
       }).catch((err) => alert('Error: ' + err.message));
-    };
+    }
   </script>
 </body>
 </html>
