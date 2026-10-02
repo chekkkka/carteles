@@ -31,27 +31,28 @@
     const db = firebase.database();
 
     const urlParams = new URLSearchParams(window.location.search);
+    const vendedor = urlParams.get('vendedor');
     const id = urlParams.get('id');
 
-    if (id) {
-      db.ref('carteles/' + id).once('value').then((snapshot) => {
-        let destino = snapshot.val();
+    if (vendedor && id) {
+      db.ref('usuarios/' + vendedor + '/carteles/' + id).once('value', function(snapshot) {
+        var destino = snapshot.val();
         if (destino) {
           if (!destino.startsWith('http://') && !destino.startsWith('https://')) {
             destino = 'https://' + destino;
           }
           window.location.href = destino;
         } else {
-          document.getElementById('titulo').innerText = `Cartel #${id}`;
-          document.getElementById('mensaje').innerText = "Este cartel aún no está activado por un comercio.";
+          document.getElementById('titulo').innerText = 'Cartel #' + id;
+          document.getElementById('mensaje').innerText = 'Este cartel aún no está activado por un comercio.';
         }
-      }).catch((err) => {
-        document.getElementById('titulo').innerText = "Error de conexión";
-        document.getElementById('mensaje').innerText = err.message;
+      }, function(error) {
+        document.getElementById('titulo').innerText = 'Error de conexión';
+        document.getElementById('mensaje').innerText = error.message;
       });
     } else {
-      document.getElementById('titulo').innerText = "Código no válido";
-      document.getElementById('mensaje').innerText = "Falta el identificador del cartel.";
+      document.getElementById('titulo').innerText = 'Código no válido';
+      document.getElementById('mensaje').innerText = 'Faltan parámetros en la URL del cartel.';
     }
   </script>
 </body>
