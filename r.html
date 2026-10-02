@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirigiendo...</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f4f6f8; text-align: center; }
+    .box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 90%; width: 350px; }
+    h2 { color: #333; font-size: 18px; margin-bottom: 10px; }
+    p { color: #666; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2 id="titulo">Redirigiendo...</h2>
+    <p id="mensaje">Aguarde un momento por favor.</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // ⚠️ REEMPLAZÁ CON TU URL DE FIREBASE
+    const firebaseConfig = {
+      databaseURL: "https://TU-PROYECTO-FIREBASE.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+
+    if (id) {
+      get(ref(db, 'carteles/' + id)).then((snapshot) => {
+        if (snapshot.exists() && snapshot.val()) {
+          window.location.href = snapshot.val();
+        } else {
+          document.getElementById('titulo').innerText = `Cartel #${id}`;
+          document.getElementById('mensaje').innerText = "Este cartel aún no está activado por un comercio.";
+        }
+      });
+    } else {
+      document.getElementById('titulo').innerText = "Código no válido";
+    }
+  </script>
+</body>
+</html>
