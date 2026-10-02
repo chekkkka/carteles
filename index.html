@@ -82,7 +82,7 @@
       }
     });
 
-   function iniciarSesion() {
+    function iniciarSesion() {
       const email = document.getElementById('email').value.trim();
       const pass = document.getElementById('password').value.trim();
       const errBox = document.getElementById('error-login');
@@ -99,8 +99,6 @@
         })
         .catch((err) => {
           console.error(err);
-          
-          // Traducimos el código o mensaje de error a español
           let mensaje = "Error al iniciar sesión.";
           const errString = err.message || JSON.stringify(err);
 
