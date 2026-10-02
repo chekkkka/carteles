@@ -11,19 +11,41 @@
     h1 { font-size: 22px; margin-bottom: 20px; text-align: center; color: #1a73e8; }
     .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
     .card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; margin-bottom: 10px; }
-    input[type="url"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
-    button { width: 100%; background: #1a73e8; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
-    button:active { background: #1557b0; }
+    input[type="url"], input[type="email"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
+    button { width: 100%; background: #1a73e8; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; margin-bottom: 5px; }
+    button.logout { background: #d93025; }
+    button:active { opacity: 0.8; }
     .status { font-size: 12px; font-weight: normal; }
+    .user-info { display: flex; justify-content: space-between; align-items: center; background: #e8f0fe; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+    #login-box { display: block; }
+    #panel-box { display: none; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Panel de Carteles QR</h1>
-    <div id="lista-carteles">Cargando carteles...</div>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-box" class="card">
+      <h2 style="font-size: 16px; margin-bottom: 15px; text-align: center;">Iniciar Sesión</h2>
+      <input type="email" id="email" placeholder="Correo Electrónico">
+      <input type="password" id="password" placeholder="Contraseña">
+      <button onclick="iniciarSesion()">Ingresar</button>
+      <p id="error-login" style="color: red; font-size: 12px; margin-top: 10px; text-align: center;"></p>
+    </div>
+
+    <!-- PANTALLA DEL PANEL -->
+    <div id="panel-box">
+      <div class="user-info">
+        <span id="user-email">Cargando...</span>
+        <button class="logout" style="width: auto; padding: 5px 10px; margin: 0;" onclick="cerrarSesion()">Salir</button>
+      </div>
+      <div id="lista-carteles">Cargando carteles...</div>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script>
@@ -34,35 +56,70 @@
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
+    const auth = firebase.auth();
     const db = firebase.database();
 
-    const contenedor = document.getElementById('lista-carteles');
+    let usuarioActual = null;
 
-    db.ref('carteles').on('value', (snapshot) => {
-      const data = snapshot.val() || {};
-      contenedor.innerHTML = '';
-      
-      for (let i = 1; i <= 50; i++) {
-        const id = String(i).padStart(3, '0');
-        const urlActual = data[id] || '';
-        
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <div class="card-header">
-            <span>Cartel #${id}</span>
-            <span class="status">${urlActual ? '✅ Asignado' : '⚪ Libre'}</span>
-          </div>
-          <input type="url" id="input-${id}" value="${urlActual}" placeholder="https://g.page/r/...">
-          <button onclick="guardarCartel('${id}')">Guardar Link</button>
-        `;
-        contenedor.appendChild(card);
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        usuarioActual = user;
+        document.getElementById('login-box').style.display = 'none';
+        document.getElementById('panel-box').style.display = 'block';
+        document.getElementById('user-email').innerText = user.email;
+        cargarCarteles(user.uid);
+      } else {
+        usuarioActual = null;
+        document.getElementById('login-box').style.display = 'block';
+        document.getElementById('panel-box').style.display = 'none';
       }
     });
 
+    function iniciarSesion() {
+      const email = document.getElementById('email').value;
+      const pass = document.getElementById('password').value;
+      document.getElementById('error-login').innerText = '';
+
+      auth.signInWithEmailAndPassword(email, pass).catch((err) => {
+        document.getElementById('error-login').innerText = "Error: " + err.message;
+      });
+    }
+
+    function cerrarSesion() {
+      auth.signOut();
+    }
+
+    function cargarCarteles(uid) {
+      const contenedor = document.getElementById('lista-carteles');
+
+      db.ref('usuarios/' + uid + '/carteles').on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        contenedor.innerHTML = '';
+        
+        for (let i = 1; i <= 50; i++) {
+          const id = String(i).padStart(3, '0');
+          const urlActual = data[id] || '';
+          
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="card-header">
+              <span>Cartel #${id}</span>
+              <span class="status">${urlActual ? '✅ Asignado' : '⚪ Libre'}</span>
+            </div>
+            <input type="url" id="input-${id}" value="${urlActual}" placeholder="https://g.page/r/...">
+            <button onclick="guardarCartel('${id}')">Guardar Link</button>
+          `;
+          contenedor.appendChild(card);
+        }
+      });
+    }
+
     function guardarCartel(id) {
+      if (!usuarioActual) return;
       const url = document.getElementById(`input-${id}`).value;
-      db.ref('carteles/' + id).set(url).then(() => {
+      
+      db.ref('usuarios/' + usuarioActual.uid + '/carteles/' + id).set(url).then(() => {
         alert(`¡Cartel #${id} guardado correctamente!`);
       }).catch((err) => alert('Error: ' + err.message));
     }
