@@ -31,7 +31,7 @@
       <input type="email" id="email" placeholder="Correo Electrónico">
       <input type="password" id="password" placeholder="Contraseña">
       <button onclick="iniciarSesion()">Ingresar</button>
-      <p id="error-login" style="color: red; font-size: 12px; margin-top: 10px; text-align: center;"></p>
+      <p id="error-login" style="color: red; font-size: 12px; margin-top: 10px; text-align: center; font-weight: bold;"></p>
     </div>
 
     <!-- PANTALLA DEL PANEL -->
@@ -50,6 +50,7 @@
 
   <script>
     const firebaseConfig = {
+      apiKey: "AIzaSyCC3zrf5vYbgM7lA7ULEBE_e1bGCtt6Krg",
       databaseURL: "https://nfccaba-5e8d5-default-rtdb.firebaseio.com"
     };
 
@@ -76,13 +77,24 @@
     });
 
     function iniciarSesion() {
-      const email = document.getElementById('email').value;
-      const pass = document.getElementById('password').value;
-      document.getElementById('error-login').innerText = '';
+      const email = document.getElementById('email').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      const errBox = document.getElementById('error-login');
+      errBox.innerText = 'Verificando...';
 
-      auth.signInWithEmailAndPassword(email, pass).catch((err) => {
-        document.getElementById('error-login').innerText = "Error: " + err.message;
-      });
+      if (!email || !pass) {
+        errBox.innerText = 'Ingresá correo y contraseña.';
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, pass)
+        .then(() => {
+          errBox.innerText = '';
+        })
+        .catch((err) => {
+          console.error(err);
+          errBox.innerText = "Error: " + err.message;
+        });
     }
 
     function cerrarSesion() {
