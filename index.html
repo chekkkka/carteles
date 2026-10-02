@@ -82,7 +82,7 @@
       }
     });
 
-    function iniciarSesion() {
+   function iniciarSesion() {
       const email = document.getElementById('email').value.trim();
       const pass = document.getElementById('password').value.trim();
       const errBox = document.getElementById('error-login');
@@ -99,7 +99,20 @@
         })
         .catch((err) => {
           console.error(err);
-          errBox.innerText = "Error: " + err.message;
+          
+          // Traducimos el código o mensaje de error a español
+          let mensaje = "Error al iniciar sesión.";
+          const errString = err.message || JSON.stringify(err);
+
+          if (errString.includes("INVALID_LOGIN_CREDENTIALS") || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+            mensaje = "Correo o contraseña incorrectos.";
+          } else if (err.code === "auth/invalid-email") {
+            mensaje = "El formato del correo no es válido.";
+          } else if (err.code === "auth/too-many-requests") {
+            mensaje = "Demasiados intentos fallidos. Intentá más tarde.";
+          }
+
+          errBox.innerText = mensaje;
         });
     }
 
